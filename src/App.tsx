@@ -19,10 +19,16 @@ export function App() {
   const [isDeviceFrame, setIsDeviceFrame] = useState<boolean>(false);
   const [serverUrl, setServerUrl] = useState<string>('http://192.168.1.136:5678');
   const [serverStatus, setServerStatus] = useState<'ONLINE' | 'CONNECTING' | 'FALLBACK'>('ONLINE');
+  const [selectedReportId, setSelectedReportId] = useState<string>('reportes-maestro');
 
   // Handle zoom increment/decrement with boundaries
   const handleZoomChange = (delta: number) => {
     setTextZoom((prev) => Math.min(2, Math.max(-1, prev + delta)));
+  };
+
+  const handleNavigateToReport = (reportId: string) => {
+    setSelectedReportId(reportId);
+    setActiveTab('reportes');
   };
 
   const handleUpdateServerUrl = (url: string) => {
@@ -57,19 +63,24 @@ export function App() {
           {activeTab === 'reportes' && (
             <ReportsModule 
               theme={currentTheme} 
-              textZoom={textZoom} 
+              textZoom={textZoom}
+              onOpenThemeModal={() => setIsThemeModalOpen(true)}
+              selectedDocId={selectedReportId}
+              onSelectDocId={setSelectedReportId}
             />
           )}
 
           {activeTab === 'telemetria' && (
             <TelemetryModule 
-              theme={currentTheme} 
+              theme={currentTheme}
+              onNavigateToReport={handleNavigateToReport}
             />
           )}
 
           {activeTab === 'auditoria' && (
             <AuditFteModule 
-              theme={currentTheme} 
+              theme={currentTheme}
+              onNavigateToReport={handleNavigateToReport}
             />
           )}
 

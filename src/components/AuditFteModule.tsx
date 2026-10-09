@@ -8,9 +8,10 @@ import {
 
 interface AuditFteModuleProps {
   theme: ThemeConfig;
+  onNavigateToReport?: (docId: string) => void;
 }
 
-export const AuditFteModule: React.FC<AuditFteModuleProps> = ({ theme }) => {
+export const AuditFteModule: React.FC<AuditFteModuleProps> = ({ theme, onNavigateToReport }) => {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(7); // Último día por defecto
   const [delegationActive, setDelegationActive] = useState<boolean>(true);
 
@@ -58,6 +59,18 @@ export const AuditFteModule: React.FC<AuditFteModuleProps> = ({ theme }) => {
                 {delegationActive ? '✓ ACTIVA (Modo Guardia)' : 'Desactivada'}
               </button>
             </div>
+
+            {onNavigateToReport && (
+              <div className="mt-2.5 pt-2 border-t border-rose-800/40 flex justify-end">
+                <button
+                  onClick={() => onNavigateToReport('informe-laboral')}
+                  className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs shadow-md flex items-center gap-1 transition-all active:scale-95"
+                >
+                  <span>📖 Leer Informe Laboral Completo (141h)</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

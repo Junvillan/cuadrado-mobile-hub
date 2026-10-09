@@ -8,9 +8,10 @@ import {
 
 interface TelemetryModuleProps {
   theme: ThemeConfig;
+  onNavigateToReport?: (docId: string) => void;
 }
 
-export const TelemetryModule: React.FC<TelemetryModuleProps> = ({ theme }) => {
+export const TelemetryModule: React.FC<TelemetryModuleProps> = ({ theme, onNavigateToReport }) => {
   const [agents, setAgents] = useState<AgentStatus[]>(INITIAL_AGENTS);
   const [gates, setGates] = useState<GateStatus[]>(INITIAL_GATES);
   const [telemetry, setTelemetry] = useState<SystemTelemetry>(INITIAL_TELEMETRY);
@@ -56,6 +57,29 @@ export const TelemetryModule: React.FC<TelemetryModuleProps> = ({ theme }) => {
 
   return (
     <div className="flex flex-col gap-3 pb-24 animate-fadeIn">
+      {/* Banner de Acceso Directo a los Reportes Notariales */}
+      {onNavigateToReport && (
+        <div className="p-3 rounded-2xl bg-gradient-to-r from-amber-950/40 via-black/40 to-amber-950/40 border border-amber-600/50 flex items-center justify-between gap-2 shadow-lg">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-xl">📜</span>
+            <div className="min-w-0">
+              <span className="font-extrabold text-xs text-amber-300 block truncate">
+                Lector de Reportes Notariales
+              </span>
+              <span className="text-[10px] opacity-75 truncate block">
+                Actas oficiales, 20 temas dinámicos y envío a Kindle
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigateToReport('parte-situacion')}
+            className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-extrabold text-xs shadow-md transition-all shrink-0 active:scale-95"
+          >
+            Abrir Reporte
+          </button>
+        </div>
+      )}
+
       {/* Panel Superior: Monitor de Recursos del Host & Dispositivo */}
       <div className={`p-3 rounded-2xl border ${theme.cardBgClass} ${theme.borderClass}`}>
         <div className="flex items-center justify-between mb-2.5">

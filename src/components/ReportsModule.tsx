@@ -12,14 +12,32 @@ import {
 interface ReportsModuleProps {
   theme: ThemeConfig;
   textZoom: number;
+  onOpenThemeModal?: () => void;
+  selectedDocId?: string;
+  onSelectDocId?: (id: string) => void;
 }
 
-export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom }) => {
-  const [selectedDocId, setSelectedDocId] = useState<string>('reportes-maestro');
+export const ReportsModule: React.FC<ReportsModuleProps> = ({ 
+  theme, 
+  textZoom,
+  onOpenThemeModal,
+  selectedDocId: externalSelectedDocId,
+  onSelectDocId,
+}) => {
+  const [internalSelectedDocId, setInternalSelectedDocId] = useState<string>('reportes-maestro');
   const [isKindleModalOpen, setIsKindleModalOpen] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
-  const selectedDoc = DOCUMENTS.find((d) => d.id === selectedDocId) || DOCUMENTS[0];
+  const activeDocId = externalSelectedDocId || internalSelectedDocId;
+  const selectedDoc = DOCUMENTS.find((d) => d.id === activeDocId) || DOCUMENTS[0];
+
+  const handleSelectDoc = (id: string) => {
+    if (onSelectDocId) {
+      onSelectDocId(id);
+    } else {
+      setInternalSelectedDocId(id);
+    }
+  };
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -109,7 +127,7 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom })
             return (
               <button
                 key={doc.id}
-                onClick={() => setSelectedDocId(doc.id)}
+                onClick={() => handleSelectDoc(doc.id)}
                 className={`flex flex-col p-2.5 rounded-xl text-left border transition-all text-xs relative ${
                   isSelected
                     ? 'border-2 shadow-lg scale-[1.02]'
@@ -164,8 +182,21 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom })
           </div>
         </div>
 
-        {/* Botones de Acción: Kindle y Refresh */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Botones de Acción: Tema + Kindle + Refresh */}
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap">
+          {/* BOTÓN CAMBIAR TEMA (20 TEMAS NOTARIALES) 🎨 */}
+          {onOpenThemeModal && (
+            <button
+              onClick={onOpenThemeModal}
+              className="px-2.5 py-1.5 rounded-xl bg-black/30 hover:bg-black/50 border border-white/10 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
+              title="Cambiar entre los 20 temas visuales"
+            >
+              <Palette className="w-3.5 h-3.5 text-sky-400" />
+              <span className="hidden sm:inline">Tema:</span>
+              <span className="truncate max-w-[80px]" style={{ color: theme.accentColor }}>{theme.name}</span>
+            </button>
+          )}
+
           {/* BOTÓN DESTACADO "ENVIAR A KINDLE" 📚 */}
           <button
             onClick={() => setIsKindleModalOpen(true)}
@@ -663,6 +694,99 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom })
                 </p>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* DOCUMENTO: SALUD YTSEN AQUINO (6 AÑOS + SUITE ADN 14 TESTS) */}
+        {selectedDoc.id === 'clinico-ytsen' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                  <HeartPulse className="w-5 h-5 shrink-0 text-emerald-400" />
+                  <span>1. Perfil Clínico Longitudinal & Suite ADN (2020–2026)</span>
+                </h2>
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-bold">
+                  🧬 Ytsen Aquino
+                </span>
+              </div>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Integración de 20 analíticas de laboratorio históricas más la nueva <strong>Suite Genómica de 14 Informes ADNTRO</strong> (82 páginas de evidencia genómica, metabolómica y farmacogenética, febrero 2026).
+              </p>
+            </section>
+
+            {/* Módulos Genómicos ADNTRO */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-emerald-900/60">
+                <span className="font-extrabold text-emerald-300 text-sm block">Methylation Report (12 págs)</span>
+                <p className="opacity-80 text-[11px] mt-1 leading-relaxed">
+                  Rutas de un carbono, ciclo de homocisteína y estado de metilación de enzimas clave MTHFR y COMT.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-emerald-900/60">
+                <span className="font-extrabold text-emerald-300 text-sm block">Sugar Spike Report (8 págs)</span>
+                <p className="opacity-80 text-[11px] mt-1 leading-relaxed">
+                  Sensibilidad genética a carbohidratos, riesgo de picos glucémicos reactivos y secreción insulínica.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-emerald-900/60">
+                <span className="font-extrabold text-emerald-300 text-sm block">Pharmacogenetics (7 págs)</span>
+                <p className="opacity-80 text-[11px] mt-1 leading-relaxed">
+                  Metabolizadores CYP2D6, CYP2C19, toxicidad y compatibilidad con familias de fármacos.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-emerald-900/60">
+                <span className="font-extrabold text-emerald-300 text-sm block">Nutrigenómica & Vitaminas (8 págs)</span>
+                <p className="opacity-80 text-[11px] mt-1 leading-relaxed">
+                  Biodisponibilidad de Vitamina D, B12, absorción de folatos y metabolismo de ácidos grasos.
+                </p>
+              </div>
+            </div>
+
+            {/* Notas Literales de Laboratorio (lab_notes) */}
+            <div className="p-4 rounded-2xl bg-amber-950/30 border border-amber-800 text-amber-100 space-y-2">
+              <h4 className="font-bold text-xs uppercase tracking-wider text-amber-300 flex items-center gap-1.5">
+                <span>Observaciones Literales del Bioanalista (`lab_notes`)</span>
+              </h4>
+              <div className="text-[11px] font-mono opacity-85 space-y-1.5 bg-black/40 p-2.5 rounded-xl border border-white/5">
+                <p>• «Glucosa basal: Determinación por método Hexoquinasa / UV. Coherente con curva metabólica histórica.»</p>
+                <p>• «Perfil Lipídico: Enzimático colorimétrico. Suero límpido, ausencia de interferencia por lipemia o hemólisis.»</p>
+                <p>• «TFG estimada: Ecuación CKD-EPI 2021 sin factor racial: &gt;90 mL/min/1.73m² (Función renal conservada).»</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DOCUMENTO: PARTE DE GUARDIA ALGORÍTMICA */}
+        {selectedDoc.id === 'guardia-circulo' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                <ShieldAlert className="w-5 h-5 shrink-0 text-indigo-400" />
+                <span>1. Acta de Guardia Algorítmica Continua 24h</span>
+              </h2>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Vigilancia activa de los enjambres de cálculo, paridad de bloques de OpenCluster y blindaje perimetral de los repositorios canónicos bajo protocolo de inmutabilidad notarial.
+              </p>
+            </section>
+          </div>
+        )}
+
+        {/* DOCUMENTO: CONSENSO DOCTORAL V3 */}
+        {selectedDoc.id === 'reporte-doctoral' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                <Sparkles className="w-5 h-5 shrink-0 text-amber-400" />
+                <span>1. Consenso Doctoral: Arquitectura de Solver IEEE-57</span>
+              </h2>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Integración de flujos de potencia Newton-Raphson con aceleración matricial, convergencia en 4.1 iteraciones y tolerancia menor a 1e-6 p.u.
+              </p>
+            </section>
           </div>
         )}
 
