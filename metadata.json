@@ -1,0 +1,5 @@
+{
+  "name": "Cuadrado Mobile Hub",
+  "description": "Comando móvil táctil y telemetría de alta resolución para el Círculo Soberano SENI-IA, enjambre de agentes y auditoría FTE con 20 temas visuales.",
+  "capabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
