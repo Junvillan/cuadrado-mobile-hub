@@ -4,7 +4,11 @@ Aplicación móvil táctil de comando y telemetría de alto rendimiento para el 
 
 ## Módulos de Operación
 
-1. **📜 Reportes Notariales (Suite de 20 Temas)**: Visor de actas notariales con 20 temas visuales (Guardia OLED, IEEE Claro, Sepia E-Reader, Matrix con lluvia digital, Árbol Clínico, etc.), zoom tipográfico A-/A+ e impresión limpia en PDF.
+1. **📜 Reportes Notariales (Suite de 20 Temas & e-Reader)**: Visor editorial íntegro con 4 documentos oficiales, botón destacado "Enviar a Kindle" 📚 (Web Share API, Amazon Web, Send to Kindle email y descarga de archivo e-Reader), suite de 20 temas visuales (Guardia OLED, Sepia, IEEE Claro, Árbol Clínico, Matrix, etc.) y zoom tipográfico A-/A+.
+   - *Doc 1*: Portal Maestro de Reportes Notariales (Suite 20 Temas).
+   - *Doc 2*: Auditoría Laboral y FTE (141h netas, multiplicador 7.5x - 8.0x, desglose 2-9 oct).
+   - *Doc 3*: Parte de Situación Operativa del Macro-Sandbox y Enjambre.
+   - *Doc 4*: Dashboard Médico & Sueño (Árbol Clínico · Polisomnografía: SOL 21.4 min, IAH 1.2, 8 eventos, SpO2 96.4% y correlación cruzada).
 2. **🛡️ Telemetría del Enjambre**: Monitor en tiempo real de los agentes GLM 5.3 (IEEE-57 N-0/N-1), Luna Codex (Macro-Sandbox v2.7.5 con 45/45 SHA-512), m3.1-Mimo (distribución MV y spinoff LSD) y Bepo (descarga OC PID 3193354). Tacómetro de compuertas G0-G7 con indicadores verdes pulsantes.
 3. **⏱️ Auditoría Laboral y Carga Cognitiva**: KPIs de 141 horas netas en 8 días continuos (17.6h/día), multiplicador 7.5x - 8.0x FTE (~915h combinadas), gráfico comparativo temporal vs límite seguro de 8h, y tarjeta de alerta clínica Wu-Wei.
 4. **⚡ Consola Scout**: Terminal de diagnóstico y sondeo con el endpoint local en el puerto 5678, con caché inmutable garantizada ante contingencias offline.

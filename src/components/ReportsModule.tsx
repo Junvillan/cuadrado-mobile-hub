@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { ThemeConfig, DocumentMeta } from '../types';
-import { DOCUMENTS } from '../data/mockReports';
+import { DOCUMENTS, FTE_DAILY_HOURS, POLYSOMNOGRAPHY_DATA } from '../data/mockReports';
+import { KindleModal } from './KindleModal';
 import { 
   FileText, ExternalLink, RefreshCw, ShieldCheck, 
-  WifiOff, Globe, Download, CheckCircle, AlertTriangle, Layers
+  BookOpen, HeartPulse, CheckCircle2, AlertTriangle, 
+  Layers, Printer, Activity, Clock, ShieldAlert, 
+  Award, TrendingUp, Sparkles, Moon, Share2, Compass
 } from 'lucide-react';
 
 interface ReportsModuleProps {
@@ -13,8 +16,7 @@ interface ReportsModuleProps {
 
 export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom }) => {
   const [selectedDocId, setSelectedDocId] = useState<string>('reportes-maestro');
-  const [viewMode, setViewMode] = useState<'cache' | 'iframe'>('cache');
-  const [iframeError, setIframeError] = useState<boolean>(false);
+  const [isKindleModalOpen, setIsKindleModalOpen] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
 
   const selectedDoc = DOCUMENTS.find((d) => d.id === selectedDocId) || DOCUMENTS[0];
@@ -23,406 +25,662 @@ export const ReportsModule: React.FC<ReportsModuleProps> = ({ theme, textZoom })
     setIsRefreshing(true);
     setTimeout(() => {
       setIsRefreshing(false);
-    }, 600);
+    }, 400);
   };
 
-  const getZoomClass = () => {
-    if (textZoom <= -1) return 'text-[12px] leading-relaxed';
-    if (textZoom === 0) return 'text-[13px] leading-relaxed';
-    if (textZoom === 1) return 'text-[14px] leading-relaxed';
-    return 'text-[15px] leading-relaxed';
+  // Dinámica de zoom tipográfico editorial
+  const getZoomTypography = () => {
+    switch (textZoom) {
+      case -1:
+        return {
+          body: 'text-[12px] leading-relaxed',
+          heading1: 'text-base sm:text-lg',
+          heading2: 'text-sm sm:text-base',
+          heading3: 'text-xs sm:text-sm',
+          kpi: 'text-lg font-black',
+        };
+      case 1:
+        return {
+          body: 'text-[15px] sm:text-[16px] leading-loose',
+          heading1: 'text-xl sm:text-2xl',
+          heading2: 'text-lg sm:text-xl',
+          heading3: 'text-sm sm:text-base',
+          kpi: 'text-2xl sm:text-3xl font-black',
+        };
+      case 2:
+        return {
+          body: 'text-[17px] sm:text-[18px] leading-loose',
+          heading1: 'text-2xl sm:text-3xl',
+          heading2: 'text-xl sm:text-2xl',
+          heading3: 'text-base sm:text-lg',
+          kpi: 'text-3xl sm:text-4xl font-black',
+        };
+      case 0:
+      default:
+        return {
+          body: 'text-[13.5px] sm:text-[14.5px] leading-relaxed',
+          heading1: 'text-lg sm:text-xl',
+          heading2: 'text-base sm:text-lg',
+          heading3: 'text-xs sm:text-sm',
+          kpi: 'text-xl sm:text-2xl font-black',
+        };
+    }
+  };
+
+  const typo = getZoomTypography();
+
+  // Generación de contenido HTML plano para la suite Kindle / e-Reader
+  const generateEreaderHtml = () => {
+    if (selectedDoc.id === 'arbol-clinico-salud') {
+      return `
+        <h2>1. Resumen de Estudio Polisomnográfico</h2>
+        <p>Paciente: ${POLYSOMNOGRAPHY_DATA.patient}. Fecha: ${POLYSOMNOGRAPHY_DATA.studyDate}.</p>
+        <p><strong>Latencia SOL:</strong> ${POLYSOMNOGRAPHY_DATA.sleepLatencySolMin} min | <strong>IAH:</strong> ${POLYSOMNOGRAPHY_DATA.iahScore} /h | <strong>Eficiencia:</strong> ${POLYSOMNOGRAPHY_DATA.sleepEfficiencyPercent}%</p>
+        <p><strong>Eventos Respiratorios Totales:</strong> ${POLYSOMNOGRAPHY_DATA.totalRespiratoryEvents} (2 apneas, 6 hipopneas). SpO2 Media: ${POLYSOMNOGRAPHY_DATA.spo2Average}%, Mínima: ${POLYSOMNOGRAPHY_DATA.spo2Nadir}%.</p>
+        <h2>2. Correlación con 141 Horas de Ingeniería</h2>
+        <p>Pico de mayor latencia registrado en Día 3 (28.5 min) coincidiendo con 19.5h continuas de trabajo en contingencias N-1. Conclusión médica: Preservación de fase REM (23.9%) y activación Wu-Wei.</p>
+      `;
+    }
+    return `
+      <h2>1. Auditoría Laboral y Esfuerzo de Ingeniería</h2>
+      <p>Total de horas netas: 141.0 horas en 8 días continuos (17.6h/día). Multiplicador de plantilla: 7.5x a 8.0x FTE (~915h combinadas).</p>
+      <h2>2. Evidencias del Enjambre</h2>
+      <p>GLM 5.3: IEEE-57 N-0/N-1 80.2% aprobadas. Luna Codex: Macro-Sandbox v2.7.5 con 45/45 artefactos SHA-512. m3.1-Mimo: 64/65 tests PASS. Bepo: Descarga OC PID 3193354.</p>
+    `;
   };
 
   return (
-    <div className="flex flex-col gap-3 pb-24 animate-fadeIn">
-      {/* Selector Superior de Documento (1 toque) */}
+    <div className="flex flex-col gap-3 pb-28 animate-fadeIn">
+      {/* 1. Selector Superior de Documento (4 Documentos Oficiales) */}
       <div className="no-print">
         <div className="flex items-center justify-between mb-1.5 px-1">
-          <span className="text-[11px] font-bold uppercase tracking-wider opacity-70">
-            Documentos Notariales del Círculo
+          <span className="text-[11px] font-bold uppercase tracking-wider opacity-75 flex items-center gap-1.5">
+            <Compass className="w-3.5 h-3.5" style={{ color: theme.accentColor }} />
+            Biblioteca Notarial del Círculo Soberano
           </span>
           <span className="text-[10px] font-mono opacity-60">
-            3 Endpoints Activos
+            4 Documentos Certificados
           </span>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
           {DOCUMENTS.map((doc) => {
             const isSelected = selectedDoc.id === doc.id;
             return (
               <button
                 key={doc.id}
-                onClick={() => {
-                  setSelectedDocId(doc.id);
-                  setIframeError(false);
-                }}
-                className={`flex flex-col p-2 rounded-xl text-left border transition-all text-xs relative ${
+                onClick={() => setSelectedDocId(doc.id)}
+                className={`flex flex-col p-2.5 rounded-xl text-left border transition-all text-xs relative ${
                   isSelected
-                    ? 'border-2 shadow-md scale-[1.02]'
+                    ? 'border-2 shadow-lg scale-[1.02]'
                     : 'border-white/10 hover:border-white/20 opacity-80'
                 }`}
                 style={{
-                  backgroundColor: isSelected ? `${theme.accentColor}18` : undefined,
+                  backgroundColor: isSelected ? `${theme.accentColor}22` : undefined,
                   borderColor: isSelected ? theme.accentColor : undefined,
                 }}
               >
                 <div className="flex items-center justify-between w-full mb-1">
-                  <span className="text-base">{doc.icon}</span>
+                  <span className="text-lg">{doc.icon}</span>
                   <span 
-                    className="text-[9px] px-1 py-0.2 rounded font-mono font-semibold"
+                    className="text-[9px] px-1.5 py-0.2 rounded-full font-mono font-bold"
                     style={{
-                      backgroundColor: isSelected ? theme.accentColor : 'rgba(255,255,255,0.1)',
+                      backgroundColor: isSelected ? theme.accentColor : 'rgba(255,255,255,0.12)',
                       color: isSelected ? (theme.isLight ? '#FFFFFF' : '#000000') : undefined,
                     }}
                   >
                     {doc.badge}
                   </span>
                 </div>
-                <span className="font-bold text-[11px] truncate leading-tight">{doc.title}</span>
-                <span className="text-[9px] opacity-65 truncate mt-0.5">{doc.subtitle}</span>
+                <span className="font-extrabold text-[11px] truncate leading-tight">{doc.title}</span>
+                <span className="text-[9px] opacity-70 truncate mt-0.5">{doc.subtitle}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Barra de Control de Conexión & Endpoint */}
-      <div className={`p-2.5 rounded-xl border flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 text-xs ${theme.cardBgClass} ${theme.borderClass} no-print`}>
+      {/* 2. Barra de Acción Editorial: Enviar a Kindle, Estado de Sellado, PDF */}
+      <div 
+        className={`p-2.5 rounded-2xl border flex items-center justify-between gap-2 shadow-sm ${theme.cardBgClass} ${theme.borderClass} no-print`}
+      >
         <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1.5 rounded-lg bg-black/20 text-emerald-400 shrink-0">
-            <Globe className="w-4 h-4" />
+          <div 
+            className="p-1.5 rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: `${theme.accentColor}20`, color: theme.accentColor }}
+          >
+            <ShieldCheck className="w-4 h-4" />
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono text-[10px] truncate max-w-[210px] sm:max-w-[320px] opacity-90">
-                {selectedDoc.endpointUrl}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="font-bold text-xs truncate">{selectedDoc.title}</span>
+              <span className="text-[9px] px-1.5 py-0.2 rounded font-mono font-bold bg-emerald-950 text-emerald-300 border border-emerald-800">
+                G7 NOTARIAL PASS
               </span>
-              <a
-                href={selectedDoc.endpointUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="opacity-60 hover:opacity-100 transition-opacity p-0.5"
-                title="Abrir URL directamente"
-              >
-                <ExternalLink className="w-3 h-3" />
-              </a>
             </div>
-            <div className="flex items-center gap-2 text-[9px] opacity-65 font-mono">
-              <span>SHA-512: {selectedDoc.hashSha512.slice(0, 12)}...</span>
-              <span>·</span>
-              <span>{selectedDoc.cachedTimestamp.split(' ')[1]}</span>
+            <div className="text-[9px] font-mono opacity-60 truncate">
+              Hash: {selectedDoc.hashSha512.slice(0, 14)}... · {selectedDoc.cachedTimestamp.split(' ')[0]}
             </div>
           </div>
         </div>
 
-        {/* View Mode Switcher */}
-        <div className="flex items-center gap-1 self-end sm:self-center">
-          <div className="flex bg-black/30 rounded-lg p-0.5 border border-white/10 text-[10px]">
-            <button
-              onClick={() => setViewMode('cache')}
-              className={`px-2 py-1 rounded transition-colors flex items-center gap-1 ${
-                viewMode === 'cache'
-                  ? 'bg-white/20 font-bold shadow-sm'
-                  : 'opacity-65 hover:opacity-100'
-              }`}
-            >
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
-              <span>Caché Offline</span>
-            </button>
-            <button
-              onClick={() => setViewMode('iframe')}
-              className={`px-2 py-1 rounded transition-colors flex items-center gap-1 ${
-                viewMode === 'iframe'
-                  ? 'bg-white/20 font-bold shadow-sm'
-                  : 'opacity-65 hover:opacity-100'
-              }`}
-            >
-              <ExternalLink className="w-3 h-3 text-sky-400" />
-              <span>WebView LAN</span>
-            </button>
-          </div>
+        {/* Botones de Acción: Kindle y Refresh */}
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* BOTÓN DESTACADO "ENVIAR A KINDLE" 📚 */}
+          <button
+            onClick={() => setIsKindleModalOpen(true)}
+            className="px-3 py-1.5 rounded-xl font-bold text-xs flex items-center gap-1.5 active:scale-95 transition-all shadow-md group"
+            style={{ 
+              backgroundColor: '#FF9900', 
+              color: '#111111' 
+            }}
+            title="Enviar documento completo a Amazon Kindle / e-Reader"
+          >
+            <BookOpen className="w-3.5 h-3.5 transition-transform group-hover:scale-110" />
+            <span className="tracking-tight">Enviar a Kindle</span>
+            <span className="text-[10px] hidden xs:inline">📚</span>
+          </button>
 
+          {/* Refrescar Documento */}
           <button
             onClick={handleRefresh}
-            className={`p-1.5 rounded-lg bg-black/20 border border-white/10 hover:bg-white/10 transition-transform ${
+            className={`p-2 rounded-xl bg-black/25 border border-white/10 hover:bg-white/10 transition-transform ${
               isRefreshing ? 'animate-spin' : ''
             }`}
-            title="Refrescar documento"
+            title="Recargar vista editorial"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
         </div>
       </div>
 
-      {/* Vista de Contenido: Iframe LAN vs Caché Offline Inmutable */}
-      {viewMode === 'iframe' ? (
-        <div className={`rounded-xl border overflow-hidden flex flex-col ${theme.cardBgClass} ${theme.borderClass}`}>
-          <div className="p-2.5 bg-black/40 border-b border-white/10 flex items-center justify-between text-xs">
-            <span className="flex items-center gap-1.5 text-[11px] font-mono">
-              <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              Conexión directa WebView a http://192.168.1.136:5678
-            </span>
-            <span className="text-[10px] opacity-65">Aceleración GPU Realme P3</span>
-          </div>
-
-          <div className="relative min-h-[420px] bg-black/50">
-            {iframeError ? (
-              <div className="p-6 text-center flex flex-col items-center justify-center min-h-[380px] gap-3">
-                <div className="w-12 h-12 rounded-full bg-amber-950/80 border border-amber-600 flex items-center justify-center text-amber-400">
-                  <WifiOff className="w-6 h-6" />
-                </div>
-                <div className="max-w-xs">
-                  <h4 className="font-bold text-sm">Servidor LAN no accesible desde nube</h4>
-                  <p className="text-xs opacity-75 mt-1 leading-relaxed">
-                    La dirección <code className="font-mono text-amber-300">192.168.1.136:5678</code> pertenece a tu red privada WiFi. Mostrando respaldo local instantáneo garantizado.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setViewMode('cache')}
-                  className="px-4 py-1.5 rounded-lg text-xs font-semibold shadow-md active:scale-95 transition-transform"
-                  style={{ backgroundColor: theme.accentColor, color: theme.isLight ? '#FFFFFF' : '#000000' }}
+      {/* 3. LECTOR EDITORIAL COMPLETO INTEGRADO (ADAPTADO AL TEMA SELECCIONADO) */}
+      <article 
+        className={`rounded-3xl border p-4 sm:p-7 shadow-2xl transition-all ${theme.cardBgClass} ${theme.borderClass} ${typo.body}`}
+      >
+        {/* Cabecera Notarial / Editorial */}
+        <header className="border-b border-white/15 pb-4 mb-5">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                <span 
+                  className="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
+                  style={{
+                    backgroundColor: `${theme.accentColor}25`,
+                    color: theme.accentColor,
+                    border: `1px solid ${theme.accentColor}50`
+                  }}
                 >
-                  Ver Caché Notarial Sellado
-                </button>
+                  Círculo Soberano · SENI-IA
+                </span>
+                <span className="text-[10px] font-mono opacity-65">
+                  Protocolo Notarial Inmutable
+                </span>
+                <span className="text-[10px] font-mono opacity-65">
+                  · Dispositivo: Realme P3 (120Hz)
+                </span>
               </div>
-            ) : (
-              <>
-                <iframe
-                  src={selectedDoc.endpointUrl}
-                  title={selectedDoc.title}
-                  className="w-full h-[520px] border-0"
-                  onError={() => setIframeError(true)}
-                  sandbox="allow-scripts allow-same-origin allow-forms"
-                />
-                <div className="p-2 bg-black/60 border-t border-white/10 text-[10px] flex items-center justify-between">
-                  <span className="opacity-70">¿El navegador bloquea conexión privada?</span>
-                  <button
-                    onClick={() => setViewMode('cache')}
-                    className="text-sky-400 underline font-medium"
-                  >
-                    Activar Modo Caché Offline
-                  </button>
-                </div>
-              </>
-            )}
+
+              <h1 className={`${typo.heading1} font-black tracking-tight mt-1`}>
+                {selectedDoc.title}
+              </h1>
+              <p className={`text-xs sm:text-sm ${theme.mutedTextClass} mt-1 font-medium`}>
+                {selectedDoc.subtitle}
+              </p>
+            </div>
+
+            <div className="text-right shrink-0">
+              <div className="text-2xl sm:text-3xl">{selectedDoc.icon}</div>
+              <div className="text-[9px] font-mono opacity-50 mt-1">
+                Ref. 2026.10
+              </div>
+            </div>
           </div>
-        </div>
-      ) : (
-        /* VISTA DE CACHÉ OFFLINE COMPLETA Y FORMAL (Sin pantalla en blanco) */
-        <div 
-          className={`rounded-2xl border p-4 sm:p-6 shadow-xl transition-all ${theme.cardBgClass} ${theme.borderClass} ${getZoomClass()}`}
-        >
-          {/* Header Notarial Formal */}
-          <div className="border-b border-white/15 pb-4 mb-4">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-wider bg-emerald-950 text-emerald-300 border border-emerald-800">
-                    Sello Notarial Activo
-                  </span>
-                  <span className="text-[10px] font-mono opacity-70">
-                    Protocolo SENI-IA · G7 PASS
-                  </span>
+
+          {/* Sello Notarial y Criptográfico */}
+          <div className="mt-3.5 grid grid-cols-2 sm:grid-cols-3 gap-2 p-2.5 rounded-2xl bg-black/30 text-[10px] font-mono border border-white/10">
+            <div>
+              <span className="opacity-50 block">Sellado Temporal:</span>
+              <span className="font-semibold">{selectedDoc.cachedTimestamp}</span>
+            </div>
+            <div>
+              <span className="opacity-50 block">Hash SHA-512:</span>
+              <span className="font-semibold truncate block" title={selectedDoc.hashSha512}>
+                {selectedDoc.hashSha512.slice(0, 18)}...
+              </span>
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <span className="opacity-50 block">Certificación de Copia:</span>
+              <span className="text-emerald-400 font-bold flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3 inline" /> Fe Notarial Inmutable
+              </span>
+            </div>
+          </div>
+        </header>
+
+        {/* =========================================================================
+            DOCUMENTO 1: PORTAL MAESTRO DE REPORTES (20 TEMAS NOTARIALES)
+        ========================================================================= */}
+        {selectedDoc.id === 'reportes-maestro' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                <Layers className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                <span>1. Preámbulo Notarial y Filosofía de Diseño</span>
+              </h2>
+              <p className="opacity-90 leading-relaxed text-justify">
+                En Madrid, a 9 de octubre de 2026, el Círculo Soberano SENI-IA deja constancia formal de la arquitectura de visualización documental multi-dispositivo concebida para la investigación doctoral de <strong>Junior Alexis Villanueva Rosario</strong>. Con el objetivo de garantizar una legibilidad ininterrumpida sin inducir fatiga visual en sesiones prolongadas de auditoría, se ha configurado una suite canónica de <strong>20 temas cromáticos</strong> gobernados por estrictos ratios de contraste WCAG AAA y algoritmos de optimización de potencia en matrices OLED.
+              </p>
+            </section>
+
+            {/* Tabla Completa de los 20 Temas Notariales */}
+            <section className="space-y-3">
+              <h3 className={`${typo.heading3} font-bold uppercase tracking-wider text-white flex items-center gap-2`}>
+                <span>2. Matriz Notarial de los 20 Temas Visuales</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/10 opacity-70">
+                  20 Perfiles
+                </span>
+              </h3>
+              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/25">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-black/50 border-b border-white/10 text-[10px] font-mono uppercase tracking-wider opacity-75">
+                    <tr>
+                      <th className="p-2.5">ID / Denominación</th>
+                      <th className="p-2.5">Fondo Base</th>
+                      <th className="p-2.5">Acento Cromático</th>
+                      <th className="p-2.5">Propósito Clínico / Operativo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-mono text-[11px]">
+                    <tr>
+                      <td className="p-2.5 font-bold text-sky-400">1. Guardia OLED</td>
+                      <td className="p-2.5">#000000 Puro</td>
+                      <td className="p-2.5">#38BDF8 Sky</td>
+                      <td className="p-2.5 font-sans">0% consumo en píxeles apagados de AMOLED Realme P3.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-blue-400">2. IEEE Claro</td>
+                      <td className="p-2.5">#F8FAFC Blanco</td>
+                      <td className="p-2.5">#002D62 Azul IEEE</td>
+                      <td className="p-2.5 font-sans">Formalidad académica para actas impresas y tribunales.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-purple-400">3. Árbol Clínico</td>
+                      <td className="p-2.5">#18122B Morado</td>
+                      <td className="p-2.5">#A78BFA Lavanda</td>
+                      <td className="p-2.5 font-sans">Atenuación simpática y reducción de estrés neurocognitivo.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-amber-500">4. Sepia E-Reader</td>
+                      <td className="p-2.5">#F4ECD8 Papiro</td>
+                      <td className="p-2.5">#7C4A03 Marrón</td>
+                      <td className="p-2.5 font-sans">Emulación de tinta electrónica para lectura prolongada.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-[#00FF66]">5. Matrix Cyber</td>
+                      <td className="p-2.5">#000000 Negro</td>
+                      <td className="p-2.5">#00FF66 Fósforo</td>
+                      <td className="p-2.5 font-sans">Lluvia digital animada en canvas nativo a 120 FPS.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-amber-400">6. Círculo Notarial</td>
+                      <td className="p-2.5">#0B0F19 Pizarra</td>
+                      <td className="p-2.5">#F59E0B Ámbar Oro</td>
+                      <td className="p-2.5 font-sans">Protocolo solemne de actas notariales con sellos PGP.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-cyan-400">7. Nordic Frost</td>
+                      <td className="p-2.5">#080D1A Ártico</td>
+                      <td className="p-2.5">#38BDF8 Cían</td>
+                      <td className="p-2.5 font-sans">Contraste gélido para auditoría técnica de compuertas G0-G7.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-rose-400">8. Crimson G0-G7</td>
+                      <td className="p-2.5">#120508 Obsidiana</td>
+                      <td className="p-2.5">#F43F5E Carmesí</td>
+                      <td className="p-2.5 font-sans">Monitoreo de umbrales críticos y alarmas del sistema.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-emerald-400">9. Esmeralda Bio</td>
+                      <td className="p-2.5">#000000 Negro</td>
+                      <td className="p-2.5">#10B981 Esmeralda</td>
+                      <td className="p-2.5 font-sans">Telemetría de bioseñales y coherencia autonómica.</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2.5 font-bold text-stone-300">10-20. Suite Extendida</td>
+                      <td className="p-2.5">Múltiples</td>
+                      <td className="p-2.5">Calibrados</td>
+                      <td className="p-2.5 font-sans">Solar SENI, Tokyo Neon, Luna Codex, Gruvbox, Pergamino Jurídico, etc.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Evidencias de Agentes */}
+            <section className="space-y-3">
+              <h3 className={`${typo.heading3} font-bold uppercase tracking-wider text-white`}>
+                3. Certificación de Aislamiento y Enjambre
+              </h3>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Cada módulo de la aplicación ejecuta un entorno hermético gobernado por el <strong>Macro-Sandbox v2.7.5</strong>. Todos los artefactos de código compilan bajo un árbol de dependencias reproducibles con hashes criptográficos SHA-512 inmutables, asegurando que la telemetría refleje sin alteración el estado del servidor local en el puerto 5678.
+              </p>
+            </section>
+          </div>
+        )}
+
+        {/* =========================================================================
+            DOCUMENTO 2: INFORME DE AUDITORÍA LABORAL & FTE (141H NETAS, 7.5x FTE)
+        ========================================================================= */}
+        {selectedDoc.id === 'informe-laboral' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                <span>1. Dictamen Notarial de Rendimiento de Ingeniería</span>
+              </h2>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Certifico que entre las 00:00 horas del 2 de octubre de 2026 y las 13:45 horas del 9 de octubre de 2026 (un lapso estricto de <strong>8 días consecutivos</strong>), el doctorando <strong>Junior Alexis Villanueva Rosario</strong> acumuló un total certificado de <strong>141.0 horas netas de ingeniería de alto rendimiento</strong> dedicadas a la resolución de contingencias IEEE-57, el ensamblado hermético del Macro-Sandbox y la programación táctil del Cuadrado Mobile Hub.
+              </p>
+            </section>
+
+            {/* 4 KPIs de Impacto */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3">
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/10 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Horas Netas</span>
+                <span className={`${typo.kpi} text-amber-400 block mt-0.5`}>141.0 h</span>
+                <span className="text-[10px] opacity-60 font-mono">8 días continuos</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/10 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Intensidad Media</span>
+                <span className={`${typo.kpi} text-rose-400 block mt-0.5`}>17.6 h/d</span>
+                <span className="text-[10px] opacity-60 font-mono">Pico: 19.5h (Día 3)</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/10 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Multiplicador FTE</span>
+                <span className={`${typo.kpi} text-emerald-400 block mt-0.5`}>7.5x - 8.0x</span>
+                <span className="text-[10px] opacity-60 font-mono">Full-Time Equiv.</span>
+              </div>
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-white/10 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Ingeniería Homóloga</span>
+                <span className={`${typo.kpi} text-sky-400 block mt-0.5`}>~915 h</span>
+                <span className="text-[10px] opacity-60 font-mono">Producción en equipo</span>
+              </div>
+            </div>
+
+            {/* Tabla Detallada Día por Día (02 - 09 Octubre) */}
+            <section className="space-y-3">
+              <h3 className={`${typo.heading3} font-bold uppercase tracking-wider text-white flex items-center gap-2`}>
+                <span>2. Registro Cronológico Diario de Ingeniería (02 al 09 Octubre 2026)</span>
+              </h3>
+              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/25">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-black/50 border-b border-white/10 text-[10px] font-mono uppercase tracking-wider opacity-75">
+                    <tr>
+                      <th className="p-2.5">Jornada</th>
+                      <th className="p-2.5">Horas Reales</th>
+                      <th className="p-2.5">Límite Seguro</th>
+                      <th className="p-2.5">FTE Equiv.</th>
+                      <th className="p-2.5">Paquete de Trabajo y Entregables</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-mono text-[11px]">
+                    {FTE_DAILY_HOURS.map((d, i) => (
+                      <tr key={i} className={i === 2 ? 'bg-rose-950/20' : ''}>
+                        <td className="p-2.5 font-bold text-white whitespace-nowrap">{d.day}</td>
+                        <td className="p-2.5 font-bold text-amber-400">{d.humanHours} h</td>
+                        <td className="p-2.5 text-rose-400 line-through opacity-70">8.0 h</td>
+                        <td className="p-2.5 font-bold text-emerald-400">{d.fteEquiv}x</td>
+                        <td className="p-2.5 font-sans text-zinc-300">{d.tasks}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-black/60 font-mono text-xs font-bold border-t border-white/10">
+                    <tr>
+                      <td className="p-2.5 text-white">TOTAL CONSOLIDADO</td>
+                      <td className="p-2.5 text-amber-400">141.0 h</td>
+                      <td className="p-2.5 text-rose-400">64.0 h máx.</td>
+                      <td className="p-2.5 text-emerald-400">7.6x prom.</td>
+                      <td className="p-2.5 font-sans text-sky-300">Superávit de +77.0 horas de sobreesfuerzo (+120%)</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </section>
+
+            {/* Alerta Clínica Wu-Wei */}
+            <div className="p-4 rounded-2xl bg-rose-950/50 border border-rose-800 text-rose-100 flex items-start gap-3.5">
+              <AlertTriangle className="w-6 h-6 text-rose-400 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-rose-300 uppercase tracking-wide">
+                  Alerta Médica Notarial · Principio Wu-Wei
+                </h4>
+                <p className="text-xs sm:text-[13px] leading-relaxed text-rose-200">
+                  «La máquina debe vigilar a la máquina y el doctorando debe descansar». Mantener un régimen de 17.6h diarias amenaza la integridad física del investigador. Por prescripción del Círculo Soberano, se ordena activar el centinela automático del enjambre (GLM, Luna, Mimo y Bepo) para transferir las tareas de supervisión y compuertas.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            DOCUMENTO 3: PARTE DE SITUACIÓN OPERATIVA DEL MACRO-SANDBOX Y ENJAMBRE
+        ========================================================================= */}
+        {selectedDoc.id === 'parte-situacion' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                <ShieldAlert className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                <span>1. Estado del Enjambre Autónomo (13:45 CEST)</span>
+              </h2>
+              <p className="opacity-90 leading-relaxed text-justify">
+                A continuación se desglosan los resultados obtenidos tras la culminación de la fase de pruebas intensivas en el clúster de cómputo, verificando la convergencia del sistema en las compuertas G0 a G7:
+              </p>
+            </section>
+
+            {/* 4 Nodos de Telemetría */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-emerald-900/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-extrabold text-emerald-300 text-sm">GLM 5.3 · IEEE-57 Contingencias</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">PASS</span>
                 </div>
-                <h2 className="text-base sm:text-lg font-black tracking-tight mt-1">
-                  {selectedDoc.title}
+                <p className="opacity-80 text-[11px] leading-relaxed">
+                  Algoritmo Newton-Raphson vectorizado. 80.2% de contingencias N-0 y N-1 resueltas con holgura de tensión. 69 de 86 casos resueltos en 44.8 segundos sin divergencias numéricas.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-sky-900/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-extrabold text-sky-300 text-sm">Luna Codex · Macro-Sandbox v2.7.5</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-sky-950 text-sky-400 border border-sky-800">PASS</span>
+                </div>
+                <p className="opacity-80 text-[11px] leading-relaxed">
+                  Ensamblado hermético de 59.2 MiB con 45 de 45 artefactos con hash SHA-512 idéntico al registro notarial. Inmutabilidad del árbol de dependencias comprobada.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-amber-900/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-extrabold text-amber-300 text-sm">m3.1-Mimo · Spinoff LSD & Tests</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800">98.4% PASS</span>
+                </div>
+                <p className="opacity-80 text-[11px] leading-relaxed">
+                  64 de 65 tests unitarios aprobados. Módulo de reconocimiento de lengua de señas (LSD) calibrado con latencia de 18ms por frame cinemático.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/30 border border-indigo-900/60">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-extrabold text-indigo-300 text-sm">Bepo · OpenCluster Sync</span>
+                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800">EN CURSO</span>
+                </div>
+                <p className="opacity-80 text-[11px] leading-relaxed">
+                  PID en host: 3193354. Descarga de pesos distribuida superior al 86.4%. Consumo de RAM: 1.4 GiB con tasa de transferencia sostenida de 14.2 MiB/s.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            DOCUMENTO 4: DASHBOARD MÉDICO & SUEÑO (ÁRBOL CLÍNICO · POLISOMNOGRAFÍA)
+        ========================================================================= */}
+        {selectedDoc.id === 'arbol-clinico-salud' && (
+          <div className="space-y-6">
+            <section className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h2 className={`${typo.heading2} font-extrabold flex items-center gap-2`} style={{ color: theme.accentColor }}>
+                  <HeartPulse className="w-5 h-5 shrink-0 text-rose-400" />
+                  <span>1. Informe de Polisomnografía Nocturna (PSG)</span>
                 </h2>
-                <p className={`text-xs ${theme.mutedTextClass} mt-0.5`}>
-                  {selectedDoc.subtitle}
-                </p>
+                <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-purple-950 text-purple-300 border border-purple-800 font-bold">
+                  🌸 Árbol Clínico
+                </span>
+              </div>
+              <p className="opacity-90 leading-relaxed text-justify">
+                Estudio neurofisiológico nocturno protocolizado para evaluar el impacto de la carga cognitiva extrema (141 horas netas en 8 días) sobre la arquitectura del sueño, el tono simpático y los parámetros respiratorios de <strong>{POLYSOMNOGRAPHY_DATA.patient}</strong>.
+              </p>
+            </section>
+
+            {/* 4 Métricas Clave de Polisomnografía Requeridas */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-3">
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-purple-900/60 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Latencia SOL</span>
+                <span className={`${typo.kpi} text-purple-300 block mt-0.5`}>
+                  {POLYSOMNOGRAPHY_DATA.sleepLatencySolMin} min
+                </span>
+                <span className="text-[10px] opacity-60 font-mono">Normal: 10-25 min</span>
               </div>
 
-              <div className="text-right shrink-0">
-                <div className="text-xl sm:text-2xl">{selectedDoc.icon}</div>
-                <div className="text-[9px] font-mono opacity-60 mt-1">
-                  Rev. 2026.10
-                </div>
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-purple-900/60 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Índice IAH</span>
+                <span className={`${typo.kpi} text-emerald-400 block mt-0.5`}>
+                  {POLYSOMNOGRAPHY_DATA.iahScore} /h
+                </span>
+                <span className="text-[10px] opacity-60 font-mono">Normal: &lt; 5.0 /h</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-purple-900/60 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Eficiencia Sueño</span>
+                <span className={`${typo.kpi} text-sky-400 block mt-0.5`}>
+                  {POLYSOMNOGRAPHY_DATA.sleepEfficiencyPercent}%
+                </span>
+                <span className="text-[10px] opacity-60 font-mono">Normal: &gt; 85%</span>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-black/35 border border-purple-900/60 text-center">
+                <span className="text-[10px] uppercase font-mono opacity-65 block">Eventos Apnea/Hipo</span>
+                <span className={`${typo.kpi} text-amber-400 block mt-0.5`}>
+                  {POLYSOMNOGRAPHY_DATA.totalRespiratoryEvents}
+                </span>
+                <span className="text-[10px] opacity-60 font-mono">2 apneas, 6 hipopneas</span>
               </div>
             </div>
 
-            {/* Metadatos de Autenticidad */}
-            <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-2 p-2 rounded-xl bg-black/20 text-[10px] font-mono border border-white/5">
-              <div>
-                <span className="opacity-50 block">Sellado Temporal:</span>
-                <span className="font-semibold">{selectedDoc.cachedTimestamp}</span>
+            {/* Arquitectura de Sueño (Fases N1, N2, N3, REM) */}
+            <section className="p-3.5 rounded-2xl bg-black/30 border border-white/10 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className={`${typo.heading3} font-bold text-white uppercase tracking-wider`}>
+                  2. Arquitectura de Etapas de Sueño (381 min TST)
+                </h3>
+                <span className="text-[10px] font-mono opacity-65">SpO2 Media: {POLYSOMNOGRAPHY_DATA.spo2Average}%</span>
               </div>
-              <div>
-                <span className="opacity-50 block">Hash SHA-512:</span>
-                <span className="font-semibold truncate block" title={selectedDoc.hashSha512}>
-                  {selectedDoc.hashSha512.slice(0, 16)}...
-                </span>
+
+              {/* Barra segmentada de arquitectura */}
+              <div className="w-full h-4 rounded-full overflow-hidden flex border border-white/10 shadow-inner">
+                {POLYSOMNOGRAPHY_DATA.sleepArchitecture.map((arch, idx) => (
+                  <div
+                    key={idx}
+                    className="h-full transition-all duration-300 relative group"
+                    style={{ width: `${arch.percent}%`, backgroundColor: arch.color }}
+                    title={`${arch.stage} (${arch.label}): ${arch.percent}% (${arch.minutes} min)`}
+                  />
+                ))}
               </div>
-              <div className="col-span-2 sm:col-span-1">
-                <span className="opacity-50 block">Estado del Nodo:</span>
-                <span className="text-emerald-400 font-bold flex items-center gap-1">
-                  <CheckCircle className="w-2.5 h-2.5 inline" /> Inmutable Verificado
-                </span>
+
+              {/* Leyenda de fases */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                {POLYSOMNOGRAPHY_DATA.sleepArchitecture.map((arch, idx) => (
+                  <div key={idx} className="p-2 rounded-xl bg-black/40 border border-white/5 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: arch.color }} />
+                    <div className="min-w-0">
+                      <span className="font-bold text-white block text-[11px]">{arch.stage} ({arch.percent}%)</span>
+                      <span className="text-[9px] opacity-60 truncate block">{arch.label}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Gráfica y Tabla de Correlación: Horas de Trabajo vs Parámetros de Sueño */}
+            <section className="space-y-3">
+              <h3 className={`${typo.heading3} font-bold uppercase tracking-wider text-white flex items-center gap-2`}>
+                <TrendingUp className="w-4 h-4 text-purple-400" />
+                <span>3. Correlación Cruzada: Carga Laboral Círculo (141h) vs. Sueño</span>
+              </h3>
+              <p className="opacity-80 text-xs leading-relaxed text-justify">
+                Correlación estadística entre las horas diarias de ingeniería y las perturbaciones del sueño (latencia SOL en minutos y despertares autonómicos nocturnos):
+              </p>
+
+              <div className="overflow-x-auto rounded-2xl border border-white/10 bg-black/25">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-black/50 border-b border-white/10 text-[10px] font-mono uppercase tracking-wider opacity-75">
+                    <tr>
+                      <th className="p-2.5">Día</th>
+                      <th className="p-2.5">Horas Trabajo</th>
+                      <th className="p-2.5">Latencia SOL</th>
+                      <th className="p-2.5">Eficiencia</th>
+                      <th className="p-2.5">Arousals</th>
+                      <th className="p-2.5">Evaluación Neurocognitiva</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5 font-mono text-[11px]">
+                    {POLYSOMNOGRAPHY_DATA.correlationFte.map((row, idx) => (
+                      <tr key={idx} className={row.hoursWorked > 19 ? 'bg-rose-950/20' : ''}>
+                        <td className="p-2.5 font-bold text-white whitespace-nowrap">{row.day} ({row.date})</td>
+                        <td className="p-2.5 font-bold text-amber-400">{row.hoursWorked} h</td>
+                        <td className="p-2.5 font-bold text-purple-300">{row.sleepLatencyMin} min</td>
+                        <td className="p-2.5 text-sky-400">{row.sleepEfficiency}%</td>
+                        <td className="p-2.5 text-rose-300">{row.arousalsCount}</td>
+                        <td className="p-2.5 font-sans text-zinc-300 text-[11px]">{row.cognitiveNote}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Conclusión del Árbol Clínico */}
+            <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-800 text-purple-100 flex items-start gap-3.5">
+              <HeartPulse className="w-6 h-6 text-purple-300 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <h4 className="font-bold text-sm text-purple-200 uppercase tracking-wide">
+                  Diagnóstico y Dictamen del Árbol Clínico
+                </h4>
+                <p className="text-xs sm:text-[13px] leading-relaxed text-purple-100/90">
+                  {POLYSOMNOGRAPHY_DATA.clinicalConclusion}
+                </p>
               </div>
             </div>
           </div>
+        )}
 
-          {/* Renderizado de contenido según el documento seleccionado */}
-          {selectedDoc.id === 'reportes-maestro' && (
-            <div className="space-y-4">
-              <section className="p-3 rounded-xl bg-black/20 border border-white/5">
-                <h3 className="font-bold text-xs uppercase tracking-wide flex items-center gap-1.5 mb-2 text-sky-400">
-                  <Layers className="w-3.5 h-3.5" />
-                  1. Suite Visual de 20 Temas Notariales
-                </h3>
-                <p className="opacity-90 leading-relaxed mb-3">
-                  El Círculo Soberano SENI-IA estipula una representación visual neutra y multifuncional adaptada para auditoría legal, lectura continua y dispositivos móviles con pantallas OLED. Cada tema preserva la jerarquía tipográfica sin distorsionar diagramas técnicos ni coeficientes de potencia eléctrica.
-                </p>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
-                  <div className="p-2 rounded-lg bg-black/40 border border-zinc-800">
-                    <span className="font-bold block text-sky-300">Guardia OLED</span>
-                    <span className="text-[10px] opacity-70">Negro absoluto #000000, 0% consumo en píxeles negros.</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-zinc-800">
-                    <span className="font-bold block text-blue-300">IEEE Claro</span>
-                    <span className="text-[10px] opacity-70">Norma formal IEEE-57 con azul #002D62 para actas impresas.</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-zinc-800">
-                    <span className="font-bold block text-purple-300">Árbol Clínico</span>
-                    <span className="text-[10px] opacity-70">Espectro lavanda #6B5CA5 para lectura prolongada sin fatiga.</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-zinc-800">
-                    <span className="font-bold block text-[#00FF66]">Matrix Cyber</span>
-                    <span className="text-[10px] opacity-70">Fósforo verde con lluvia digital a 120 FPS en Realme P3.</span>
-                  </div>
-                </div>
-              </section>
+        {/* Footer Notarial Inmutable */}
+        <footer className="mt-8 pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] opacity-65 font-mono">
+          <span>© 2026 Círculo Soberano SENI-IA · Cuadrado Mobile Hub</span>
+          <span>Sello Notarial PGP: 4A89 F201 9B4C 3310 EA82 7701 B119 5CD3</span>
+        </footer>
+      </article>
 
-              <section className="p-3 rounded-xl bg-black/20 border border-white/5">
-                <h3 className="font-bold text-xs uppercase tracking-wide flex items-center gap-1.5 mb-2 text-emerald-400">
-                  <CheckCircle className="w-3.5 h-3.5" />
-                  2. Certificación Notarial del Ecosistema
-                </h3>
-                <p className="opacity-90 leading-relaxed">
-                  Doy fe que el repositorio de telemetría y ejecución <code className="font-mono bg-black/40 px-1 py-0.5 rounded text-amber-300">Cuadrado Mobile Hub</code> ejecuta de forma autónoma el monitoreo continuo de los agentes <strong className="text-white">GLM 5.3</strong>, <strong className="text-white">Luna Codex</strong>, <strong className="text-white">m3.1-Mimo</strong> y <strong className="text-white">Bepo</strong> bajo parámetros de aislamiento estricto.
-                </p>
-                <div className="mt-3 p-2.5 rounded-lg border border-dashed border-white/20 bg-black/30 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-bold block">Firma Electrónica Avanzada:</span>
-                    <span className="font-mono text-[9px] opacity-70">PGP: 4A89 F201 9B4C 3310 EA82 7701 B119 5CD3</span>
-                  </div>
-                  <span className="text-xs px-2 py-1 rounded bg-emerald-950 text-emerald-300 font-bold border border-emerald-800">
-                    VALIDADO
-                  </span>
-                </div>
-              </section>
-            </div>
-          )}
-
-          {selectedDoc.id === 'informe-laboral' && (
-            <div className="space-y-4">
-              <section className="p-3 rounded-xl bg-black/20 border border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-xs uppercase tracking-wide text-amber-400">
-                    Resumen Ejecutivo de Esfuerzo de Ingeniería
-                  </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">
-                    Carga Extrema: 17.6h/día
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs my-3">
-                  <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
-                    <span className="text-[10px] opacity-65 block">Horas Netas</span>
-                    <span className="text-xl font-black text-amber-300">141.0 h</span>
-                    <span className="text-[9px] opacity-50 block mt-0.5">8 días continuos</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
-                    <span className="text-[10px] opacity-65 block">Multiplicador FTE</span>
-                    <span className="text-xl font-black text-emerald-400">7.5x - 8.0x</span>
-                    <span className="text-[9px] opacity-50 block mt-0.5">Equiv. plantilla</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
-                    <span className="text-[10px] opacity-65 block">Horas Homólogas</span>
-                    <span className="text-xl font-black text-sky-300">~915 h</span>
-                    <span className="text-[9px] opacity-50 block mt-0.5">Ingeniería total</span>
-                  </div>
-                  <div className="p-2.5 rounded-xl bg-black/40 border border-white/10">
-                    <span className="text-[10px] opacity-65 block">Límite Seguro</span>
-                    <span className="text-xl font-black text-rose-400">8.0 h/d</span>
-                    <span className="text-[9px] opacity-50 block mt-0.5">+120% sobrepaso</span>
-                  </div>
-                </div>
-                <p className="text-xs opacity-90 leading-relaxed">
-                  Doctorando a cargo: <strong className="text-white">Junior Alexis Villanueva Rosario</strong>. Auditoría certificada de actividad de repositorio, logs de compilación de Macro-Sandbox y cálculos vectorizados IEEE-57.
-                </p>
-              </section>
-
-              {/* Alerta Clínica Wu-Wei */}
-              <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-800/80 flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
-                <div className="text-xs">
-                  <h4 className="font-bold text-rose-300 uppercase tracking-wide">
-                    Alerta Clínica Wu-Wei · Sobreesfuerzo Crítico
-                  </h4>
-                  <p className="text-rose-100/90 mt-1 leading-relaxed">
-                    «La máquina debe vigilar a la máquina y el doctorando debe descansar». La intensidad de 17.6 horas diarias consecutivas excede ampliamente los umbrales de homeostasis cognitiva. Se activa el protocolo de telemetría automática y delegación al enjambre autónomo.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {selectedDoc.id === 'parte-situacion' && (
-            <div className="space-y-4">
-              <section className="p-3 rounded-xl bg-black/20 border border-white/5">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-xs uppercase tracking-wide text-sky-400">
-                    Diagnóstico Operativo Global (13:45 CEST)
-                  </h3>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-800">
-                    8/8 GATES PASS
-                  </span>
-                </div>
-                <div className="space-y-2 text-xs">
-                  <div className="p-2 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-white block">GLM 5.3 · Contingencias IEEE-57</span>
-                      <span className="text-[11px] opacity-75">80.2% contingencias N-0/N-1 aprobadas (69/86 en 44.8s).</span>
-                    </div>
-                    <span className="font-mono text-emerald-400 font-bold text-xs">PASS</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-white block">Luna Codex · Macro-Sandbox v2.7.5</span>
-                      <span className="text-[11px] opacity-75">45/45 artefactos con validación criptográfica SHA-512 (59 MiB).</span>
-                    </div>
-                    <span className="font-mono text-emerald-400 font-bold text-xs">PASS</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-white block">m3.1-Mimo · Spinoff LSD & Tests MV</span>
-                      <span className="text-[11px] opacity-75">64/65 pruebas unitarias exitosas (98.4%).</span>
-                    </div>
-                    <span className="font-mono text-amber-400 font-bold text-xs">PASS 98%</span>
-                  </div>
-                  <div className="p-2 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between">
-                    <div>
-                      <span className="font-bold text-white block">Bepo · Sincronización OpenCluster</span>
-                      <span className="text-[11px] opacity-75">&gt;85% descargado (PID 3193354, ETA ~21:45 CEST).</span>
-                    </div>
-                    <span className="font-mono text-indigo-400 font-bold text-xs">EN CURSO</span>
-                  </div>
-                </div>
-              </section>
-
-              <div className="p-3 rounded-xl bg-black/20 border border-white/5 flex items-center justify-between text-xs font-mono">
-                <span className="opacity-70">Dispositivo Móvil de Auditoría:</span>
-                <span className="font-bold text-sky-300">Realme P3 · AMOLED 120Hz (12 GB RAM)</span>
-              </div>
-            </div>
-          )}
-
-          {/* Sello Notarial de Cierre */}
-          <div className="mt-5 pt-3 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-2 text-[10px] opacity-70 font-mono">
-            <span>© 2026 Círculo Soberano SENI-IA · Cuadrado Hub Mobile</span>
-            <span>Certificado por Notaría Digital Delegada</span>
-          </div>
-        </div>
-      )}
+      {/* Modal Suite "Enviar a Kindle" 📚 */}
+      <KindleModal
+        document={selectedDoc}
+        theme={theme}
+        isOpen={isKindleModalOpen}
+        onClose={() => setIsKindleModalOpen(false)}
+        documentHtmlContent={generateEreaderHtml()}
+      />
     </div>
   );
 };
